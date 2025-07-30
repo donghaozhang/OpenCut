@@ -124,9 +124,6 @@ export function useSelectionBox({
       });
 
       // Always call the callback - with elements or empty array to clear selection
-      console.log(
-        JSON.stringify({ selectElementsInBox: selectedElements.length })
-      );
       onSelectionComplete(selectedElements);
     },
     [containerRef, onSelectionComplete]
@@ -161,17 +158,11 @@ export function useSelectionBox({
     };
 
     const handleMouseUp = () => {
-      console.log(
-        JSON.stringify({ mouseUp: { wasActive: selectionBox?.isActive } })
-      );
-
       // If we had an active selection, mark that we just finished selecting
       if (selectionBox?.isActive) {
-        console.log(JSON.stringify({ settingJustFinishedSelecting: true }));
         setJustFinishedSelecting(true);
         // Clear the flag after a short delay to allow click events to check it
         setTimeout(() => {
-          console.log(JSON.stringify({ clearingJustFinishedSelecting: true }));
           setJustFinishedSelecting(false);
         }, 50);
       }

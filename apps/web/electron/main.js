@@ -12,7 +12,9 @@ async function createWindow() {
       contextIsolation: true,
       webSecurity: false, // Allow localhost connections
     },
-    show: false // Don't show until ready
+    show: true, // Show immediately for debugging
+    alwaysOnTop: true, // Temporarily on top
+    center: true
   });
 
   console.log('🚀 Loading OpenCut from localhost...');

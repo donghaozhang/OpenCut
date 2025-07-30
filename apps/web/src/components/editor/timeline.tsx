@@ -198,7 +198,6 @@ export function Timeline() {
     containerRef: tracksContainerRef,
     playheadRef,
     onSelectionComplete: (elements) => {
-      console.log(JSON.stringify({ onSelectionComplete: elements.length }));
       setSelectedElements(elements);
     },
   });
@@ -206,16 +205,6 @@ export function Timeline() {
   // Timeline content click to seek handler
   const handleTimelineContentClick = useCallback(
     (e: React.MouseEvent) => {
-      console.log(
-        JSON.stringify({
-          timelineClick: {
-            isSelecting,
-            justFinishedSelecting,
-            willReturn: isSelecting || justFinishedSelecting,
-          },
-        })
-      );
-
       // Don't seek if this was a selection box operation
       if (isSelecting) {
         return;
@@ -376,11 +365,6 @@ export function Timeline() {
   // Old marquee system removed - using new SelectionBox component instead
 
   const handleDragEnter = (e: React.DragEvent) => {
-    console.log('🎯 TIMELINE: handleDragEnter triggered!', {
-      types: Array.from(e.dataTransfer.types),
-      hasMediaItem: e.dataTransfer.types.includes("application/x-media-item")
-    });
-    
     // When something is dragged over the timeline, show overlay
     e.preventDefault();
     // Don't show overlay for timeline elements - they're handled by tracks
@@ -394,7 +378,6 @@ export function Timeline() {
   };
 
   const handleDragOver = (e: React.DragEvent) => {
-    console.log('🎯 TIMELINE: handleDragOver triggered!');
     e.preventDefault();
   };
 
@@ -414,11 +397,6 @@ export function Timeline() {
 
   const handleDrop = async (e: React.DragEvent) => {
     // When media is dropped, add it as a new track/element
-    console.log('🎯 TIMELINE: handleDrop triggered!', {
-      dataTransferTypes: Array.from(e.dataTransfer.types),
-      hasMediaItem: e.dataTransfer.types.includes("application/x-media-item")
-    });
-    
     e.preventDefault();
     setIsDragOver(false);
     dragCounterRef.current = 0;
@@ -551,13 +529,6 @@ export function Timeline() {
           let targetTrack = tracks.find((t) => t.type === trackType);
           const newTrackId = targetTrack ? targetTrack.id : addTrack(trackType);
 
-          console.log("🎬 Adding media element to timeline:", {
-            mediaItemId: mediaItem.id,
-            mediaItemName: mediaItem.name,
-            mediaItemDuration: mediaItem.duration,
-            fallbackDuration: 5,
-            finalDuration: mediaItem.duration || 5
-          });
           
           addElementToTrack(newTrackId, {
             type: "media",
@@ -598,14 +569,6 @@ export function Timeline() {
             const trackType =
               processedItem.type === "audio" ? "audio" : "media";
             const newTrackId = addTrack(trackType);
-            console.log("📁 Adding uploaded file to timeline:", {
-              addedItemId: addedItem.id,
-              addedItemName: addedItem.name,
-              addedItemDuration: addedItem.duration,
-              processedItemDuration: processedItem.duration,
-              fallbackDuration: 5,
-              finalDuration: addedItem.duration || 5
-            });
             
             addElementToTrack(newTrackId, {
               type: "media",
