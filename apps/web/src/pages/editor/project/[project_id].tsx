@@ -1,5 +1,6 @@
 import { useEffect, useCallback, useRef, Suspense } from "react";
 import { useRouter } from "next/router";
+import { useParams } from "@tanstack/react-router";
 
 // Debug render counter
 let renderCount = 0;
@@ -47,28 +48,42 @@ function EditorContent() {
 
   const { activeProject, loadProject, createNewProject } = useProjectStore();
   const { isDialogOpen } = useExportStore();
-  const router = useRouter();
   
   // Stabilize function references to prevent useEffect loops
   const stableLoadProject = useCallback(loadProject, []);
   const stableCreateNewProject = useCallback(createNewProject, []);
-  const { project_id } = router.query;
+  
+  // Detect if we're using TanStack Router (Electron) or Next.js Router (web)
+  const isElectron = typeof window !== 'undefined' && (window as any).electronAPI;
+  let projectId = "";
 
-  // Support both dynamic route (params) and static route with query param (?project_id=xxx)
-  const projectIdParam = Array.isArray(project_id) ? project_id[0] : project_id;
-  const projectIdQuery = typeof router.query.project_id === 'string' ? router.query.project_id : null;
-  const projectId = (projectIdParam ?? projectIdQuery ?? "") as string;
+  // Get router reference for both modes
+  const nextRouter = useRouter();
+  
+  if (isElectron) {
+    // Use TanStack Router params
+    try {
+      const params = useParams({ strict: false });
+      projectId = (params as any)?.projectId || "";
+    } catch (error) {
+      console.warn("TanStack Router params not available, using fallback");
+    }
+  } else {
+    // Use Next.js Router
+    const { project_id } = nextRouter.query;
+    const projectIdParam = Array.isArray(project_id) ? project_id[0] : project_id;
+    const projectIdQuery = typeof nextRouter.query.project_id === 'string' ? nextRouter.query.project_id : null;
+    projectId = (projectIdParam ?? projectIdQuery ?? "") as string;
+  }
   
   // Debug: Track projectId changes
   useEffect(() => {
     debugLogger.log('EditorPage', 'PROJECT_ID_CHANGED', {
-      projectIdParam,
-      projectIdQuery,
       finalProjectId: projectId,
-      routerReady: router.isReady,
-      routerQuery: router.query
+      isElectron,
+      routerType: isElectron ? 'TanStack' : 'Next.js'
     });
-  }, [projectId, router.isReady]);
+  }, [projectId]);
 
   usePlaybackControls();
 
@@ -97,7 +112,7 @@ function EditorContent() {
       const stack = new Error().stack;
       debugLogger.log('Router', 'ROUTE_CHANGE_START', {
         newUrl: url,
-        currentUrl: router.asPath,
+        currentUrl: isElectron ? window.location.pathname : nextRouter.asPath,
         currentProjectId: activeProject?.id,
         callStack: stack,
         trigger: 'navigation_detected'
@@ -107,7 +122,7 @@ function EditorContent() {
     const handleRouteChangeComplete = (url: string) => {
       debugLogger.log('Router', 'ROUTE_CHANGE_COMPLETE', {
         newUrl: url,
-        previousUrl: router.asPath,
+        previousUrl: isElectron ? window.location.pathname : nextRouter.asPath,
         currentProjectId: activeProject?.id
       });
     };
@@ -116,21 +131,23 @@ function EditorContent() {
       debugLogger.log('Router', 'ROUTE_CHANGE_ERROR', {
         error: err.message,
         targetUrl: url,
-        currentUrl: router.asPath,
+        currentUrl: isElectron ? window.location.pathname : nextRouter.asPath,
         currentProjectId: activeProject?.id
       });
     };
     
-    router.events.on('routeChangeStart', handleRouteChangeStart);
-    router.events.on('routeChangeComplete', handleRouteChangeComplete);
-    router.events.on('routeChangeError', handleRouteChangeError);
-    
-    return () => {
-      router.events.off('routeChangeStart', handleRouteChangeStart);
-      router.events.off('routeChangeComplete', handleRouteChangeComplete);
-      router.events.off('routeChangeError', handleRouteChangeError);
-    };
-  }, [router, activeProject?.id]);
+    if (!isElectron) {
+      nextRouter.events.on('routeChangeStart', handleRouteChangeStart);
+      nextRouter.events.on('routeChangeComplete', handleRouteChangeComplete);
+      nextRouter.events.on('routeChangeError', handleRouteChangeError);
+      
+      return () => {
+        nextRouter.events.off('routeChangeStart', handleRouteChangeStart);
+        nextRouter.events.off('routeChangeComplete', handleRouteChangeComplete);
+        nextRouter.events.off('routeChangeError', handleRouteChangeError);
+      };
+    }
+  }, [nextRouter, activeProject?.id]);
 
   // Debug: Window error listener
   useEffect(() => {
@@ -220,7 +237,12 @@ function EditorContent() {
             projectId 
           });
           
-          setTimeout(() => router.replace('/projects'), 100);
+          if (isElectron) {
+            // Use TanStack Router navigation
+            window.history.replaceState({}, '', '/projects');
+          } else {
+            setTimeout(() => nextRouter.replace('/projects'), 100);
+          }
           return;
         }
       }
@@ -245,7 +267,12 @@ function EditorContent() {
               localStorage.removeItem('opencut-fallback-project');
               debugLogger.log('EditorPage', 'NAVIGATING_TO_FALLBACK_PROJECT', { newProjectId });
               // Use setTimeout to prevent mid-render navigation that could cause AI component re-mount
-              setTimeout(() => router.replace(`/editor/project/${newProjectId}`), 100);
+              if (isElectron) {
+                // Use TanStack Router navigation
+                window.history.replaceState({}, '', `/editor/project/${newProjectId}`);
+              } else {
+                setTimeout(() => nextRouter.replace(`/editor/project/${newProjectId}`), 100);
+              }
               return;
             }
           } catch (parseError) {
@@ -264,7 +291,12 @@ function EditorContent() {
           currentLocation: window.location.href
         });
         // Use setTimeout to prevent mid-render navigation that could cause AI component re-mount
-        setTimeout(() => router.replace(`/editor/project/${newProjectId}`), 100);
+        if (isElectron) {
+          // Use TanStack Router navigation
+          window.history.replaceState({}, '', `/editor/project/${newProjectId}`);
+        } else {
+          setTimeout(() => nextRouter.replace(`/editor/project/${newProjectId}`), 100);
+        }
       }
     };
 

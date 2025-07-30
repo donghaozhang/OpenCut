@@ -127,3 +127,23 @@ docs/technical/platform/github_documentation.md
 # Playwright test reports
 playwright-report/
 test-results/
+
+# Electron build output
+apps/web/electron-dist/
+
+# NPM package lock files (using bun)
+package-lock.json
+apps/web/package-lock.json
+
+# Temporary files
+nul
+
+# Build artifacts
+apps/web/out/
+apps/web/dist/
+apps/web/.next/
+
+# Router files (temporary development)
+apps/web/src/components/router-adapter.tsx
+apps/web/src/components/tanstack-router-app.tsx
+apps/web/src/lib/router.tsx

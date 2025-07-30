@@ -12,11 +12,12 @@ import { ElectronErrorBoundary } from '@/components/electron-error-boundary'
 import { ElectronImmediateFix } from '@/components/electron-immediate-fix'
 import { ElectronRouterWrapper } from '@/components/electron-router-wrapper'
 import { ElectronReactProvider } from '@/components/electron-react-provider'
+import { TanStackRouterApp } from '@/components/tanstack-router-app'
 import '../styles/globals.css'
 import '@/lib/electron-font-fix'
 import '@/lib/debug-logger'
 
-// ROOT CAUSE FIX: Disable all Next.js router behavior for Electron
+// TanStack Router replaces Next.js routing for better Electron compatibility
 const isElectron = typeof window !== 'undefined' && (window as any).electronAPI;
 
 // =================== PHASE 4: ERROR BOUNDARY INTEGRATION ===================
@@ -35,7 +36,35 @@ export default function App({ Component, pageProps }: AppProps) {
     }
   };
 
-  // Single consistent render tree to prevent hydration mismatches
+  // Use TanStack Router for Electron, Next.js routing for web
+  if (isElectron) {
+    return (
+      <ElectronErrorBoundary onError={handleError}>
+        <ElectronReactProvider>
+          <div className={`${inter.className} font-sans antialiased`}>
+            <ThemeProvider
+              attribute="class"
+              forcedTheme="dark"
+            >
+              <TooltipProvider>
+                <UrlValidationProvider>
+                  <StorageProvider>
+                    <TanStackRouterApp />
+                    <Toaster />
+                    <DevelopmentDebug />
+                  </StorageProvider>
+                </UrlValidationProvider>
+              </TooltipProvider>
+            </ThemeProvider>
+            <ElectronHydrationFix />
+            <ElectronImmediateFix />
+          </div>
+        </ElectronReactProvider>
+      </ElectronErrorBoundary>
+    )
+  }
+
+  // Default Next.js routing for web
   return (
     <ElectronErrorBoundary onError={handleError}>
       <ElectronReactProvider>
