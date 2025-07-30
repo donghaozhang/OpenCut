@@ -127,4 +127,3 @@ docs/technical/platform/github_documentation.md
 # Playwright test reports
 playwright-report/
 test-results/
-apps/web/e2e/
