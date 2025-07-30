@@ -38,10 +38,8 @@ bunx electron electron/main.js --port=3001
 The build process automatically runs several scripts in the `apps/web/scripts/` folder:
 
 1. **fix-electron-paths-robust.js** - Converts relative paths to app:// protocol
-2. **electron-editor-fix.js** - Removes blocking scripts from editor HTML
-3. **copy-nav-fix.js** - Copies navigation fix to output directory
 
-These scripts are automatically executed during `bun run export:electron`.
+This script is automatically executed during `bun run export:electron`.
 
 ## Cross-Platform Building
 

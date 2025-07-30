@@ -22,13 +22,6 @@ export function EditorProvider({ children }: EditorProviderProps) {
   }, [initializeApp]);
 
   useEffect(() => {
-    // Debug editor provider state changes (disabled by default)
-    // console.log('🎬 EDITOR PROVIDER STATE CHANGE:', {
-    //   isInitializing,
-    //   isPanelsReady,
-    //   shouldShowLoading: isInitializing || !isPanelsReady,
-    //   timestamp: Date.now()
-    // });
   }, [isInitializing, isPanelsReady]);
 
   // Show loading screen while initializing
