@@ -1,0 +1,210 @@
+<!DOCTYPE html><html lang="en"><head><meta charSet="utf-8" data-next-head=""/><meta name="viewport" content="width=device-width" data-next-head=""/><meta charSet="utf-8"/><meta name="description" content="A simple but powerful video editor that gets the job done. In your browser."/><link rel="manifest" href="./manifest.json"/><meta name="robots" content="index, follow"/><meta name="msapplication-config" content="/browserconfig.xml"/><meta name="mobile-web-app-capable" content="yes"/><meta name="apple-mobile-web-app-title" content="OpenCut"/><meta name="apple-mobile-web-app-status-bar-style" content="default"/><meta property="og:title" content="OpenCut"/><meta property="og:description" content="A simple but powerful video editor that gets the job done. In your browser."/><meta property="og:url" content="https://opencut.app/"/><meta property="og:site_name" content="OpenCut"/><meta property="og:locale" content="en_US"/><meta property="og:image" content="https://opencut.app/opengraph-image.jpg"/><meta property="og:image:width" content="1200"/><meta property="og:image:height" content="630"/><meta property="og:image:alt" content="OpenCut"/><meta property="og:type" content="website"/><meta name="twitter:card" content="summary_large_image"/><meta name="twitter:creator" content="@opencutapp"/><meta name="twitter:title" content="OpenCut"/><meta name="twitter:description" content="A simple but powerful video editor that gets the job done. In your browser."/><meta name="twitter:image" content="http://localhost:3000/opengraph-image.jpg"/><link rel="shortcut icon" href="./favicon.ico"/><link rel="icon" href="./favicon.ico"/><link rel="icon" href="./icons/favicon-16x16.png" sizes="16x16" type="image/png"/><link rel="icon" href="./icons/favicon-32x32.png" sizes="32x32" type="image/png"/><link rel="icon" href="./icons/favicon-96x96.png" sizes="96x96" type="image/png"/><link rel="apple-touch-icon" href="./icons/apple-icon-57x57.png" sizes="57x57" type="image/png"/><link rel="apple-touch-icon" href="./icons/apple-icon-60x60.png" sizes="60x60" type="image/png"/><link rel="apple-touch-icon" href="./icons/apple-icon-72x72.png" sizes="72x72" type="image/png"/><link rel="apple-touch-icon" href="./icons/apple-icon-76x76.png" sizes="76x76" type="image/png"/><link rel="apple-touch-icon" href="./icons/apple-icon-114x114.png" sizes="114x114" type="image/png"/><link rel="apple-touch-icon" href="./icons/apple-icon-120x120.png" sizes="120x120" type="image/png"/><link rel="apple-touch-icon" href="./icons/apple-icon-144x144.png" sizes="144x144" type="image/png"/><link rel="apple-touch-icon" href="./icons/apple-icon-152x152.png" sizes="152x152" type="image/png"/><link rel="apple-touch-icon" href="./icons/apple-icon-180x180.png" sizes="180x180" type="image/png"/><script>
+              // Debug logs disabled by default
+              // console.log('🚀 [ELECTRON DEBUG] JavaScript executing in Electron');
+              
+              // ROOT CAUSE FIX: IMMEDIATE blocking before ANY library loads
+              (function() {
+                // Override fetch globally IMMEDIATELY - must be synchronous
+                if (typeof window !== 'undefined' && window.fetch) {
+                  const originalFetch = window.fetch;
+                  window.fetch = function(input, init) {
+                    const url = typeof input === 'string' ? input : (input && input.url) || input.toString();
+                    
+                    // DETAILED DEBUG: Log ALL fetch requests to understand the pattern (disabled by default)
+                    // console.log('🔍 [FETCH DEBUG] Request intercepted:', {
+                    //   url: url,
+                    //   type: typeof input,
+                    //   input: input,
+                    //   stack: new Error().stack
+                    // });
+                    
+                    // Allow FFmpeg files
+                    if (url && (url.includes('/ffmpeg/') || url.includes('ffmpeg-core'))) {
+                      // console.log('✅ [ELECTRON] Allowing FFmpeg file:', url);
+                      return originalFetch.apply(this, arguments);
+                    }
+                    
+                    // Block problematic .json requests but allow Next.js development files
+                    if (url && (url.includes('.json') || url.includes('_next/data') || url.includes('.html.json'))) {
+                      // Allow Next.js development middleware files
+                      if (url.includes('_devMiddleware') || url.includes('_devPage') || url.includes('page-loader')) {
+                        // console.log('✅ [ELECTRON] Allowing Next.js dev file:', url.split('/').pop());
+                        return originalFetch.apply(this, arguments);
+                      }
+                      console.warn('🚫 [ELECTRON] Blocked data fetch:', url.split('/').pop());
+                      return Promise.reject(new Error('Data fetching disabled in Electron'));
+                    }
+                    return originalFetch.apply(this, arguments);
+                  };
+                }
+                
+                // Override XMLHttpRequest immediately
+                if (typeof window !== 'undefined' && window.XMLHttpRequest) {
+                  const OriginalXHR = window.XMLHttpRequest;
+                  window.XMLHttpRequest = function() {
+                    const xhr = new OriginalXHR();
+                    const originalOpen = xhr.open;
+                    xhr.open = function(method, url) {
+                      // DETAILED DEBUG: Log ALL XHR requests
+                      // console.log('🔍 [XHR DEBUG] Request intercepted:', {
+                      //   method: method,
+                      //   url: url,
+                      //   stack: new Error().stack
+                      // });
+                      
+                      if (typeof url === 'string' && (url.includes('.json') || url.includes('_next/data') || url.includes('.html.json'))) {
+                        // console.warn('🚫 [ELECTRON] Blocked XHR:', method, url.split('/').pop());
+                        throw new Error('Data fetching disabled in Electron');
+                      }
+                      return originalOpen.apply(this, arguments);
+                    };
+                    return xhr;
+                  };
+                }
+                
+                // Override any resource creation that could trigger JSON requests
+                if (typeof document !== 'undefined' && document.createElement) {
+                  const originalCreateElement = document.createElement;
+                  document.createElement = function(tagName) {
+                    const element = originalCreateElement.call(this, tagName);
+                    
+                    if (tagName.toLowerCase() === 'script' && element.setAttribute) {
+                      const originalSetAttribute = element.setAttribute;
+                      element.setAttribute = function(name, value) {
+                        if (name === 'src' && typeof value === 'string' && (value.includes('.json') || value.includes('_next/data'))) {
+                          console.log('🚫 [IMMEDIATE BLOCK] Script creation blocked:', value);
+                          return;
+                        }
+                        return originalSetAttribute.call(this, name, value);
+                      };
+                    }
+                    
+                    return element;
+                  };
+                }
+                
+                // COMPREHENSIVE DEBUG: Monitor ALL resource loading  
+                if (typeof window !== 'undefined') {
+                  // Monitor Performance API for resource loading
+                  const originalPerformanceObserver = window.PerformanceObserver;
+                  if (originalPerformanceObserver) {
+                    try {
+                      const observer = new originalPerformanceObserver((list) => {
+                        for (const entry of list.getEntries()) {
+                          if (entry.name && (entry.name.includes('.json') || entry.name.includes('_next/data'))) {
+                            // Filter out legitimate Next.js development files and PWA manifest
+                            const isLegitimateDevFile = 
+                              entry.name.includes('_devMiddleware') ||
+                              entry.name.includes('_devPage') ||
+                              entry.name.includes('_devMiddlewareManifest') ||
+                              entry.name.includes('static/development/') ||
+                              entry.name.includes('page-loader') ||
+                              entry.name.includes('webpack-hmr') ||
+                              entry.name.includes('hot-reloader') ||
+                              entry.name.includes('_buildManifest') ||
+                              entry.name.includes('_ssgManifest') ||
+                              entry.name.includes('_middlewareManifest') ||
+                              entry.name.includes('manifest.json');
+                            
+                            // Only log potentially problematic resources
+                            if (!isLegitimateDevFile) {
+                              console.error('🚫 [PERFORMANCE API] Detected JSON resource load attempt:');
+                              console.error('Resource:', entry.name);
+                              console.error('Type:', entry.entryType);
+                              console.error('Entry:', entry);
+                              console.error('=================================');
+                            }
+                          }
+                        }
+                      });
+                      observer.observe({entryTypes: ['resource', 'navigation']});
+                      // console.log('✅ [DEBUG] Performance monitoring enabled for resource detection');
+                    } catch (e) {
+                      console.log('⚠️ [DEBUG] Performance monitoring not available:', e);
+                    }
+                  }
+                  
+                  // Monitor window errors for failed requests
+                  window.addEventListener('error', function(e) {
+                    if (e.target && e.target.src && (e.target.src.includes('.json') || e.target.src.includes('_next/data'))) {
+                      console.error('🚫 [WINDOW ERROR] Failed resource detected:');
+                      console.error('Failed resource:', e.target.src);
+                      console.error('Target:', e.target);
+                      console.error('Error:', e);
+                      console.error('=================================');
+                    }
+                  });
+                  
+                  // ElectronAPI detection debugging
+                  // console.log('🔍 [ELECTRON API DEBUG] Detection status:', {
+                  //   electronAPI: typeof window.electronAPI,
+                  //   process: typeof window.process,
+                  //   require: typeof window.require,
+                  //   userAgent: navigator.userAgent,
+                  //   isElectron: window.process && window.process.type === 'renderer'
+                  // });
+                }
+                
+                // console.log('✅ [IMMEDIATE BLOCK] All data fetching mechanisms blocked at script level');
+              })();
+              
+              // Wait for DOM to be ready
+              document.addEventListener('DOMContentLoaded', function() {
+                // console.log('🚀 [ELECTRON] DOM ready, checking for ElectronAPI');
+                
+                if (typeof window !== 'undefined' && window.electronAPI && document.body) {
+                  document.body.setAttribute('data-electron', 'true');
+                  console.log('🚀 [ELECTRON] ElectronAPI detected and data-electron set');
+                  
+                  // Force React hydration to complete immediately for Electron
+                  if (window.__NEXT_DATA__) {
+                    window.__NEXT_DATA__.isFallback = false;
+                    window.__NEXT_DATA__.gsp = false;
+                    window.__NEXT_DATA__.gssp = false;
+                  }
+                }
+                
+                // console.log('🚀 [DEBUG] Page loaded, body data-electron:', document.body ? document.body.getAttribute('data-electron') : 'body not found');
+              });
+              
+              // Click debug logging and fallback handler for when React doesn't load
+              const DEBUG_CLICKS = false; // Set to true to enable click debugging
+              document.addEventListener('click', function(e) {
+                if (DEBUG_CLICKS) console.log('🚀 [CLICK DEBUG] Click:', e.target.tagName, e.target.textContent?.slice(0, 30));
+                
+                // Fallback handler for New Project button when React fails to hydrate
+                // Only trigger for actual "New project" buttons, not project titles or other elements
+                if (e.target.tagName === 'BUTTON' && 
+                    e.target.textContent && 
+                    e.target.textContent.trim() === 'New project' &&
+                    !e.target.closest('[role="combobox"]') &&  // Exclude dropdown triggers
+                    !e.target.closest('.select-trigger') &&   // Exclude select components
+                    !e.target.closest('[data-testid="model-select"]')) { // Exclude model selectors
+                  console.log('🚀 [FALLBACK] New project button clicked - React fallback handler');
+                  console.log('🔄 [FALLBACK] Redirecting to projects page instead of creating fallback project');
+                  
+                  // Navigate to projects page where user can create proper project
+                  try {
+                    window.location.href = '/projects';
+                  } catch (error) {
+                    console.error('🚀 [FALLBACK] Error navigating to projects:', error);
+                  }
+                  
+                  e.preventDefault();
+                  e.stopPropagation();
+                  return false;
+                }
+                
+                // Handle navigation clicks for static export
+                if (e.target.tagName === 'A' || e.target.closest('a')) {
+                  const link = e.target.tagName === 'A' ? e.target : e.target.closest('a');
+                  const href = link.getAttribute('href');
+                  
+                  if (href && !href.startsWith('http') && !href.startsWith('mailto:')) {
+                    e.preventDefault();
+                    console.log('🚀 [NAV DEBUG] Navigating to:', href);
+                    window.location.href = href;
+                  }
+                }
+              });
+            </script><link rel="preload" href="./_next/static/media/e4af272ccee01ff0-s.p.woff2" as="font" type="font/woff2" crossorigin="anonymous" data-next-font="size-adjust"/><link rel="preload" href="./_next/static/css/cc31a2214821e49d.css" as="style"/><link rel="stylesheet" href="./_next/static/css/cc31a2214821e49d.css" data-n-g=""/><noscript data-n-css=""></noscript><script defer="" nomodule="" src="./_next/static/chunks/polyfills-42372ed130431b0a.js"></script><script src="./_next/static/chunks/webpack-731bfd78a28a695a.js" defer=""></script><script src="./_next/static/chunks/framework-fcb003d1215bbdca.js" defer=""></script><script src="./_next/static/chunks/main-60330211c6bca2e4.js" defer=""></script><script src="./_next/static/chunks/pages/_app-732815dc3c40e0fc.js" defer=""></script><script src="./_next/static/chunks/7ddb3757-292431e10d4d043d.js" defer=""></script><script src="./_next/static/chunks/128-ada8116276f6679e.js" defer=""></script><script src="./_next/static/chunks/588-2493fdc20a43a124.js" defer=""></script><script src="./_next/static/chunks/281-85a97ae9e1826eba.js" defer=""></script><script src="./_next/static/chunks/pages/index-370486e2f81b744a.js" defer=""></script><script src="./_next/static/bETHjg1fndhOR7IjxGd4c/_buildManifest.js" defer=""></script><script src="./_next/static/bETHjg1fndhOR7IjxGd4c/_ssgManifest.js" defer=""></script></head><body><div id="__next"><div class="__className_e8ce0c font-sans antialiased"><script>((e,i,s,u,m,a,l,h)=>{let d=document.documentElement,w=["light","dark"];function p(n){(Array.isArray(e)?e:[e]).forEach(y=>{let k=y==="class",S=k&&a?m.map(f=>a[f]||f):m;k?(d.classList.remove(...S),d.classList.add(a&&a[n]?a[n]:n)):d.setAttribute(y,n)}),R(n)}function R(n){h&&w.includes(n)&&(d.style.colorScheme=n)}function c(){return window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"}if(u)p(u);else try{let n=localStorage.getItem(i)||s,y=l&&n==="system"?c():n;p(y)}catch(n){}})("class","theme","system","dark",["light","dark"],null,true,true)</script><div><div class="mx-4 md:mx-0"><header class="px-6 h-14 flex justify-between items-center bg-accent rounded-2xl max-w-3xl mx-auto mt-4 pl-4 pr-[14px]"><div class="flex items-center"><a class="flex items-center gap-3 no-underline" style="text-decoration:none" href="./"><img alt="OpenCut Logo" loading="lazy" width="32" height="32" decoding="async" data-nimg="1" style="color:transparent;margin-left:380px" src="./logo.svg"/><span class="text-xl font-medium" style="color:white">OpenCut</span></a></div><div class="flex items-center"><nav class="flex items-center bg-black/30 backdrop-blur-md rounded-full px-4 py-2 border-2 border-white/20 shadow-lg" style="margin-right:120px;transform:translateX(-30px)"><a class="text-sm hover:text-gray-300 transition-colors no-underline" style="text-decoration:none;margin-right:24px;color:white" href="./blog">Blog</a><a class="text-sm hover:text-gray-300 transition-colors no-underline" style="text-decoration:none;margin-right:24px;color:white" href="./contributors">Contributors</a><a href="./projects"><button style="background-color:white;color:black;border:1px solid rgb(209, 213, 219);border-radius:12px;height:30px;padding-left:20px;padding-right:20px;font-size:16px;font-weight:500;display:inline-flex;align-items:center;justify-content:center;gap:8px;cursor:pointer;transition:0.2s;transform:translateY(0px);box-shadow:rgba(0, 0, 0, 0.1) 0px 1px 3px">Projects<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-arrow-right ml-0.5 h-4 w-4" aria-hidden="true"><path d="M5 12h14"></path><path d="m12 5 7 7-7 7"></path></svg></button></a></nav></div></header></div><div class="min-h-[calc(100vh-4.5rem)] supports-[height:100dvh]:min-h-[calc(100dvh-4.5rem)] flex flex-col justify-between items-center text-center px-4"><img alt="landing-page.bg" loading="lazy" width="1269" height="1903.5" decoding="async" data-nimg="1" class="absolute top-0 left-0 -z-50 size-full object-cover" style="color:transparent" src="./landing-page-bg.png"/><div class="max-w-5xl mx-auto w-full flex-1 flex flex-col justify-center"><div class="mb-8 flex justify-center" style="transform:translateY(-60px)"><a href="https://vercel.com/home?utm_source=opencut" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 px-3 py-2 rounded-full bg-white/5 backdrop-blur-sm hover:bg-white/10 transition-all duration-200 group shadow-lg no-underline border border-white/20"><span class="text-xs font-medium transition-colors" style="color:white">Sponsored by</span><div class="flex items-center gap-1.5"><div class="text-zinc-100 group-hover:text-white transition-colors"><svg class="w-4 h-4" width="20" height="18" viewBox="0 0 76 65" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M37.5274 0L75.0548 65H0L37.5274 0Z" fill="currentColor"></path></svg></div><span class="text-xs font-medium transition-colors" style="color:white">Vercel</span></div></a></div><h1 class="font-bold tracking-tighter text-black dark:text-white" style="font-size:clamp(2.25rem, 4.5vw, 4.5rem);transform:translateY(-40px)">The Open Source</h1><span class="absolute -left-[9999px] px-4 whitespace-nowrap font-bold tracking-tighter text-yellow-500" style="font-size:clamp(2.5rem, 5vw, 4.5rem);line-height:1">Video Editor</span><div class="flex justify-center gap-4 mt-4 md:mt-6" style="margin-top:-60px"><div class="relative select-none transition-transform duration-300 ease-out" style="width:458px;height:70px;transform:rotate(-2.76deg)"><div class="absolute inset-0 rounded-2xl border border-yellow-500 pointer-events-none"></div><div style="position:absolute;top:4px;left:24px;right:24px;height:2px;background-color:#eab308;z-index:30;pointer-events:none"></div><div style="position:absolute;bottom:4px;left:24px;right:24px;height:2px;background-color:#eab308;z-index:30;pointer-events:none"></div><div style="position:absolute;top:50%;left:50%;transform:translate(-50%, -50%);width:2px;height:60%;background-color:#eab308;z-index:30;pointer-events:none"></div><button type="button" aria-label="Adjust start" class="z-20 absolute top-0 h-full w-4 rounded-full bg-[#262626] border-2 border-yellow-500 flex items-center justify-center cursor-ew-resize focus:outline-none focus:ring-2 focus:ring-yellow-400 transition-transform duration-150 ease-in-out opacity-100 hover:scale-110" style="left:0;touch-action:none;box-shadow:0 0 0 2px #262626, 0 0 0 4px #eab308"><span class="w-3 h-5 rounded-full bg-yellow-500"></span></button><button type="button" aria-label="Adjust end" class="z-20 absolute top-0 h-full w-4 rounded-full bg-[#262626] border-2 border-yellow-500 flex items-center justify-center cursor-ew-resize focus:outline-none focus:ring-2 focus:ring-yellow-400 transition-transform duration-150 ease-in-out opacity-100 hover:scale-110" style="left:440px;touch-action:none;box-shadow:0 0 0 2px #262626, 0 0 0 4px #eab308"><span class="w-3 h-5 rounded-full bg-yellow-500"></span></button><div class="flex z-10 items-center justify-center w-full h-full px-4 overflow-hidden pointer-events-none font-bold tracking-tighter text-yellow-500" style="clip-path:inset(0 0px 0 0px round 1rem);font-size:clamp(2.5rem, 5vw, 4.5rem);line-height:1">Video Editor</div></div></div><p class="mt-8 text-lg md:text-xl max-w-2xl mx-auto text-gray-400" style="opacity:0.95">An intuitive, powerful, and free video editor for everyone.<br/>Works on any platform.</p><div class="mt-8 flex gap-8 justify-center"><a href="./projects"><button style="background-color:white;color:black;border:1px solid #d1d5db;border-radius:8px;height:40px;padding-left:24px;padding-right:24px;font-size:12px;font-weight:500;display:inline-flex;align-items:center;justify-content:center;gap:4px;cursor:pointer;transition:all 0.2s">Try early beta<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-arrow-right ml-0.5 h-4 w-4" aria-hidden="true"><path d="M5 12h14"></path><path d="m12 5 7 7-7 7"></path></svg></button></a></div></div></div><footer class="bg-background border-t" style="opacity:0"><div class="max-w-5xl mx-auto px-8 py-10"><div class="grid grid-cols-1 md:grid-cols-2 gap-12 mb-8"><div class="md:col-span-1 max-w-sm"><div class="flex items-center gap-2 mb-4"><img alt="OpenCut" loading="lazy" width="24" height="24" decoding="async" data-nimg="1" style="color:transparent" src="./logo.svg"/><span class="font-bold text-lg">OpenCut</span></div><p class="text-sm text-muted-foreground mb-5">The open source video editor that gets the job done. Simple, powerful, and works on any platform.</p><div class="flex gap-3"><a class="text-muted-foreground hover:text-foreground transition-colors" target="_blank" rel="noopener noreferrer" href="https://github.com/OpenCut-app/OpenCut"><svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 24 24" class="h-5 w-5" height="1em" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M5.88401 18.6533C5.58404 18.4526 5.32587 18.1975 5.0239 17.8369C4.91473 17.7065 4.47283 17.1524 4.55811 17.2583C4.09533 16.6833 3.80296 16.417 3.50156 16.3089C2.9817 16.1225 2.7114 15.5499 2.89784 15.0301C3.08428 14.5102 3.65685 14.2399 4.17672 14.4263C4.92936 14.6963 5.43847 15.1611 6.12425 16.0143C6.03025 15.8974 6.46364 16.441 6.55731 16.5529C6.74784 16.7804 6.88732 16.9182 6.99629 16.9911C7.20118 17.1283 7.58451 17.1874 8.14709 17.1311C8.17065 16.7489 8.24136 16.3783 8.34919 16.0358C5.38097 15.3104 3.70116 13.3952 3.70116 9.63971C3.70116 8.40085 4.0704 7.28393 4.75917 6.3478C4.5415 5.45392 4.57433 4.37284 5.06092 3.15636C5.1725 2.87739 5.40361 2.66338 5.69031 2.57352C5.77242 2.54973 5.81791 2.53915 5.89878 2.52673C6.70167 2.40343 7.83573 2.69705 9.31449 3.62336C10.181 3.41879 11.0885 3.315 12.0012 3.315C12.9129 3.315 13.8196 3.4186 14.6854 3.62277C16.1619 2.69 17.2986 2.39649 18.1072 2.52651C18.1919 2.54013 18.2645 2.55783 18.3249 2.57766C18.6059 2.66991 18.8316 2.88179 18.9414 3.15636C19.4279 4.37256 19.4608 5.45344 19.2433 6.3472C19.9342 7.28337 20.3012 8.39208 20.3012 9.63971C20.3012 13.3968 18.627 15.3048 15.6588 16.032C15.7837 16.447 15.8496 16.9105 15.8496 17.4121C15.8496 18.0765 15.8471 18.711 15.8424 19.4225C15.8412 19.6127 15.8397 19.8159 15.8375 20.1281C16.2129 20.2109 16.5229 20.5077 16.6031 20.9089C16.7114 21.4504 16.3602 21.9773 15.8186 22.0856C14.6794 22.3134 13.8353 21.5538 13.8353 20.5611C13.8353 20.4708 13.836 20.3417 13.8375 20.1145C13.8398 19.8015 13.8412 19.599 13.8425 19.4094C13.8471 18.7019 13.8496 18.0716 13.8496 17.4121C13.8496 16.7148 13.6664 16.2602 13.4237 16.051C12.7627 15.4812 13.0977 14.3973 13.965 14.2999C16.9314 13.9666 18.3012 12.8177 18.3012 9.63971C18.3012 8.68508 17.9893 7.89571 17.3881 7.23559C17.1301 6.95233 17.0567 6.54659 17.199 6.19087C17.3647 5.77663 17.4354 5.23384 17.2941 4.57702L17.2847 4.57968C16.7928 4.71886 16.1744 5.0198 15.4261 5.5285C15.182 5.69438 14.8772 5.74401 14.5932 5.66413C13.7729 5.43343 12.8913 5.315 12.0012 5.315C11.111 5.315 10.2294 5.43343 9.40916 5.66413C9.12662 5.74359 8.82344 5.69492 8.57997 5.53101C7.8274 5.02439 7.2056 4.72379 6.71079 4.58376C6.56735 5.23696 6.63814 5.77782 6.80336 6.19087C6.94565 6.54659 6.87219 6.95233 6.61423 7.23559C6.01715 7.8912 5.70116 8.69376 5.70116 9.63971C5.70116 12.8116 7.07225 13.9683 10.023 14.2999C10.8883 14.3971 11.2246 15.4769 10.5675 16.0482C10.3751 16.2156 10.1384 16.7802 10.1384 17.4121V20.5611C10.1384 21.5474 9.30356 22.2869 8.17878 22.09C7.63476 21.9948 7.27093 21.4766 7.36613 20.9326C7.43827 20.5204 7.75331 20.2116 8.13841 20.1276V19.1381C7.22829 19.1994 6.47656 19.0498 5.88401 18.6533Z"></path></svg></a><a class="text-muted-foreground hover:text-foreground transition-colors" target="_blank" rel="noopener noreferrer" href="https://x.com/OpenCutApp"><svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 24 24" class="h-5 w-5" height="1em" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M10.4883 14.651L15.25 21H22.25L14.3917 10.5223L20.9308 3H18.2808L13.1643 8.88578L8.75 3H1.75L9.26086 13.0145L2.31915 21H4.96917L10.4883 14.651ZM16.25 19L5.75 5H7.75L18.25 19H16.25Z"></path></svg></a></div></div><div class="flex gap-12 justify-start items-start py-2"><div><h3 class="font-semibold text-foreground mb-4">Resources</h3><ul class="space-y-2 text-sm"><li><a class="transition-colors no-underline" style="color:white" href="./privacy">Privacy policy</a></li><li><a class="transition-colors no-underline" style="color:white" href="./terms">Terms of use</a></li></ul></div><div><h3 class="font-semibold text-foreground mb-4">Company</h3><ul class="space-y-2 text-sm"><li><a class="transition-colors no-underline" style="color:white" href="./contributors">Contributors</a></li><li><a class="transition-colors no-underline" style="color:white" target="_blank" rel="noopener noreferrer" href="https://github.com/OpenCut-app/OpenCut/blob/main/README.md">About</a></li></ul></div></div></div><div class="pt-2 flex flex-col md:flex-row justify-between items-center gap-4"><div class="flex items-center gap-4 text-sm text-muted-foreground"><span>© 2025 OpenCut, All Rights Reserved</span></div></div></div></footer></div><section aria-label="Notifications alt+T" tabindex="-1" aria-live="polite" aria-relevant="additions text" aria-atomic="false"></section></div></div><script id="__NEXT_DATA__" type="application/json">{"props":{"pageProps":{}},"page":"/","query":{},"buildId":"bETHjg1fndhOR7IjxGd4c","nextExport":true,"autoExport":true,"isFallback":false,"scriptLoader":[]}</script></body></html>

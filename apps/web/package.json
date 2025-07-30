@@ -9,13 +9,13 @@
     "build": "next build",
     "build:electron": "cross-env NEXT_PUBLIC_ELECTRON=true next build",
     "postexport": "node scripts/fix-electron-paths-robust.js",
-    "export:electron": "cross-env NEXT_PUBLIC_ELECTRON=true next build && bun run postexport",
+    "export:electron": "cross-env NEXT_PUBLIC_ELECTRON=true next build && npm run postexport",
     "electron:dev": "node scripts/dev-electron.js",
-    "electron:simple": "bunx electron electron/main.js",
-    "electron:build": "bun run export:electron",
-    "electron:pack": "bun run electron:build && bunx electron-builder --dir",
-    "electron:dist": "bun run electron:build && bunx electron-builder --publish=never",
-    "electron:dist:win": "bun run electron:build && bunx electron-builder --win"
+    "electron:simple": "npx electron electron/main.js",
+    "electron:build": "npm run export:electron",
+    "electron:pack": "npm run electron:build && npx electron-builder --dir",
+    "electron:dist": "npm run electron:build && npx electron-builder --publish=never",
+    "electron:dist:win": "npm run electron:build && npx electron-builder --win"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.1.11",
@@ -27,6 +27,7 @@
     "cross-env": "^7.0.3",
     "electron": "37.2.3",
     "electron-builder": "26.0.12",
+    "electron-packager": "^17.1.2",
     "postcss": "^8.5.6",
     "tailwindcss": "^4.1.11",
     "typescript": "^5.8.3"
@@ -37,13 +38,15 @@
     "npmRebuild": false,
     "buildDependenciesFromSource": false,
     "asar": false,
+    "nodeGypRebuild": false,
     "directories": {
       "output": "dist"
     },
     "files": [
       "out/**/*",
       "electron/**/*",
-      "electron-app.html"
+      "electron-app.html",
+      "!node_modules/**/*"
     ],
     "extraFiles": [
       {

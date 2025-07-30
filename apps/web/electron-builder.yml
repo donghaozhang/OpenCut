@@ -1,0 +1,32 @@
+appId: com.opencut.desktop
+productName: OpenCut Desktop
+directories:
+  output: dist
+files:
+  - out/**/*
+  - electron/**/*
+  - electron-app.html
+  - "!node_modules/**/*"
+  - "!src/**/*"
+  - "!scripts/**/*"
+  - "!e2e/**/*"
+  - "!migrations/**/*"
+  - "!.next/**/*"
+extraFiles:
+  - from: public/ffmpeg
+    to: ffmpeg
+    filter:
+      - "**/*"
+win:
+  target: nsis
+  signAndEditExecutable: false
+nsis:
+  oneClick: false
+  allowElevation: true
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+npmRebuild: false
+buildDependenciesFromSource: false
+nodeGypRebuild: false
+asar: false

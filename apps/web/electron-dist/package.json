@@ -1,0 +1,8 @@
+{
+  "name": "opencut-desktop",
+  "version": "0.1.0",  
+  "description": "OpenCut Desktop - Privacy-focused video editor",
+  "main": "main.js",
+  "author": "OpenCut Team",
+  "license": "ISC"
+}
