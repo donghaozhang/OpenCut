@@ -109,7 +109,14 @@ export default function ProjectsPage() {
       // Add small delay to ensure state has stabilized before navigation
       await new Promise(resolve => setTimeout(resolve, 100));
       
-      router.push(`/editor/project/${encodeURIComponent(projectId)}`);
+      // Check if in Electron environment
+      if (typeof window !== 'undefined' && (window as any).electronAPI) {
+        // Use hash navigation for Electron
+        window.location.hash = `/editor/project/${encodeURIComponent(projectId)}`;
+      } else {
+        // Use Next.js router for web
+        router.push(`/editor/project/${encodeURIComponent(projectId)}`);
+      }
     } catch (error) {
       console.error('❌ [PROJECT] Creation failed:', error);
       throw error; // Re-throw to trigger error boundary
