@@ -48,14 +48,28 @@ export function ElectronEditorWrapper() {
       }
       
       console.log('✅ [DEBUG] Rendering EditorPage directly (no dynamic import)');
-      return (
-        <div style={{background: 'green', minHeight: '100vh', padding: '20px'}}>
-          <div style={{background: 'yellow', color: 'black', padding: '10px', marginBottom: '20px'}}>
-            DEBUG: Direct import EditorPage with project ID: {projectId}
+      
+      // Add error boundary for the editor page
+      try {
+        return (
+          <div style={{background: 'green', minHeight: '100vh', padding: '20px'}}>
+            <div style={{background: 'yellow', color: 'black', padding: '10px', marginBottom: '20px'}}>
+              DEBUG: Direct import EditorPage with project ID: {projectId}
+            </div>
+            <EditorPage />
           </div>
-          <EditorPage />
-        </div>
-      );
+        );
+      } catch (editorError) {
+        console.error('❌ [DEBUG] EditorPage render error:', editorError);
+        return (
+          <div style={{padding: '20px', background: 'orange', color: 'black', minHeight: '100vh'}}>
+            <h1>Editor Render Error</h1>
+            <p>Error rendering EditorPage: {editorError instanceof Error ? editorError.message : String(editorError)}</p>
+            <p>Project ID: {projectId}</p>
+            <pre>{editorError instanceof Error ? editorError.stack : 'No stack trace'}</pre>
+          </div>
+        );
+      }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
       debugLog('EDITOR_WITH_PROPS_ERROR', { error: errorMessage });

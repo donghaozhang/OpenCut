@@ -83,6 +83,7 @@ export default function ProjectsPage() {
     isLoading,
     isInitialized,
     deleteProject,
+    loadAllProjects,
   } = useProjectStore();
   const router = useRouter();
   const [isSelectionMode, setIsSelectionMode] = useState(false);
@@ -113,10 +114,30 @@ export default function ProjectsPage() {
       console.log('✅ [DEBUG] Project created successfully:', projectId);
       debugLogger.log('UI', 'PROJECT_CREATED', { projectId });
       
-      // Add delay debugging
-      console.log('⏳ [DEBUG] Adding 100ms delay before navigation...');
-      await new Promise(resolve => setTimeout(resolve, 100));
+      // Add much longer delay to ensure project is fully saved before navigation
+      console.log('⏳ [DEBUG] Adding 1500ms delay before navigation to ensure project is saved...');
+      await new Promise(resolve => setTimeout(resolve, 1500));
       console.log('⏳ [DEBUG] Delay complete, proceeding to navigation');
+      
+      // Verify project was actually created before navigation
+      const projectExists = savedProjects.find(p => p.id === projectId);
+      if (!projectExists) {
+        console.error('❌ [DEBUG] Project not found in savedProjects after creation!');
+        console.log('🔍 [DEBUG] Available projects:', savedProjects.map(p => p.id));
+        debugLogger.log('UI', 'PROJECT_NOT_FOUND_AFTER_CREATION', { 
+          projectId, 
+          availableProjects: savedProjects.map(p => p.id) 
+        });
+        // Force reload projects and try again
+        await loadAllProjects();  
+        const projectExistsAfterReload = savedProjects.find(p => p.id === projectId);
+        if (!projectExistsAfterReload) {
+          throw new Error(`Project ${projectId} was not created successfully`);
+        }
+        console.log('✅ [DEBUG] Project found after reload');
+      } else {
+        console.log('✅ [DEBUG] Project verified in savedProjects before navigation');
+      }
       
       // Environment detection debugging
       const hasElectronAPI = typeof window !== 'undefined' && (window as any).electronAPI;
