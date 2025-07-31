@@ -24,6 +24,11 @@ import { useMediaPanelStore } from "@/components/editor/media-panel/store";
 import { debugLogger } from "@/lib/debug-logger";
 
 function EditorContent() {
+  console.log('✏️ [EDITOR] Editor content rendering...');
+  console.log('✏️ [EDITOR] Current URL:', window.location.href);
+  console.log('✏️ [EDITOR] Current hash:', window.location.hash);
+  console.log('✏️ [EDITOR] Render count:', ++renderCount);
+  
   const {
     toolsPanel,
     previewPanel,
@@ -54,12 +59,34 @@ function EditorContent() {
   
   // Use Next.js Router for all environments now
   const router = useRouter();
+  console.log('✏️ [EDITOR] Router query:', router.query);
+  console.log('✏️ [EDITOR] Router isReady:', router.isReady);
   const { project_id } = router.query;
 
   // Support both dynamic route (params) and static route with query param (?project_id=xxx)
   const projectIdParam = Array.isArray(project_id) ? project_id[0] : project_id;
   const projectIdQuery = typeof router.query.project_id === 'string' ? router.query.project_id : null;
   const projectId = (projectIdParam ?? projectIdQuery ?? "") as string;
+  
+  console.log('✏️ [EDITOR] Project ID resolution:', {
+    project_id,
+    projectIdParam,
+    projectIdQuery,
+    finalProjectId: projectId
+  });
+  
+  // Add early return for debugging
+  if (!router.isReady) {
+    console.log('⏳ [EDITOR] Router not ready, showing loading...');
+    return <div style={{padding: '20px', fontSize: '18px'}}>🔄 Router Loading...</div>;
+  }
+  
+  if (!projectId) {
+    console.log('❌ [EDITOR] No project_id found:', router.query);
+    return <div style={{padding: '20px', fontSize: '18px'}}>❌ No Project ID Found</div>;
+  }
+  
+  console.log('✅ [EDITOR] All checks passed, rendering editor...');
   
   // Debug: Track projectId changes
   useEffect(() => {

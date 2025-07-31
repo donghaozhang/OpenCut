@@ -4,6 +4,7 @@ import { useState } from "react";
 // Debug flag - set to false to disable console logs
 const DEBUG_PROJECTS = process.env.NODE_ENV === 'development' && false;
 import { Button } from "@/components/ui/button";
+import { debugLogger } from "@/lib/debug-logger";
 import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -94,33 +95,59 @@ export default function ProjectsPage() {
   const [sortByName, setSortByName] = useState(false);
 
   const handleCreateProject = async () => {
+    console.log('🚀 [DEBUG] New Project button clicked');
+    debugLogger.log('UI', 'NEW_PROJECT_CLICKED', { timestamp: Date.now() });
+    
     if (isCreatingProject) {
-      console.log('🚫 [PROJECT] Creation already in progress, ignoring duplicate click');
+      console.log('🚫 [DEBUG] Creation already in progress, ignoring duplicate click');
       return;
     }
     
     setIsCreatingProject(true);
-    console.log('🚀 [PROJECT] Starting project creation...');
+    console.log('🏗️ [DEBUG] Starting project creation...');
     
     try {
+      console.log('📝 [DEBUG] Calling createNewProject...');
+      debugLogger.log('UI', 'CALLING_CREATE_PROJECT', { name: "New Project" });
       const projectId = await createNewProject("New Project");
-      console.log('✅ [PROJECT] Project created, navigating to:', projectId);
+      console.log('✅ [DEBUG] Project created successfully:', projectId);
+      debugLogger.log('UI', 'PROJECT_CREATED', { projectId });
       
-      // Add small delay to ensure state has stabilized before navigation
+      // Add delay debugging
+      console.log('⏳ [DEBUG] Adding 100ms delay before navigation...');
       await new Promise(resolve => setTimeout(resolve, 100));
+      console.log('⏳ [DEBUG] Delay complete, proceeding to navigation');
       
-      // Check if in Electron environment
-      if (typeof window !== 'undefined' && (window as any).electronAPI) {
-        // Use hash navigation for Electron
-        window.location.hash = `/editor/project/${encodeURIComponent(projectId)}`;
+      // Environment detection debugging
+      const hasElectronAPI = typeof window !== 'undefined' && (window as any).electronAPI;
+      console.log('🔍 [DEBUG] Environment check:', {
+        hasWindow: typeof window !== 'undefined',
+        hasElectronAPI: hasElectronAPI,
+        electronAPI: hasElectronAPI ? (window as any).electronAPI : 'not found'
+      });
+      
+      if (hasElectronAPI) {
+        const targetHash = `/editor/project/${encodeURIComponent(projectId)}`;
+        console.log('🔄 [DEBUG] Using hash navigation for Electron to:', targetHash);
+        console.log('🔍 [DEBUG] Current hash before change:', window.location.hash);
+        
+        window.location.hash = targetHash;
+        
+        console.log('🔍 [DEBUG] Hash after change:', window.location.hash);
+        console.log('🔍 [DEBUG] Full URL after change:', window.location.href);
       } else {
-        // Use Next.js router for web
+        console.log('🔄 [DEBUG] Using Next.js router for web');
         router.push(`/editor/project/${encodeURIComponent(projectId)}`);
       }
+      
+      console.log('✅ [DEBUG] Navigation command completed');
     } catch (error) {
-      console.error('❌ [PROJECT] Creation failed:', error);
+      console.error('❌ [DEBUG] Project creation failed:', error);
+      console.error('❌ [DEBUG] Error stack:', error instanceof Error ? error.stack : 'No stack available');
+      debugLogger.log('UI', 'PROJECT_CREATION_FAILED', { error: error instanceof Error ? error.message : String(error) });
       throw error; // Re-throw to trigger error boundary
     } finally {
+      console.log('🔄 [DEBUG] Setting isCreatingProject to false');
       setIsCreatingProject(false);
     }
   };
