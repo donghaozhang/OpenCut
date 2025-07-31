@@ -37,7 +37,7 @@ echo "🧹 Cleaning temp files..."
 rm -rf temp-build
 
 echo "📂 Opening result folder..."
-explorer "dist/OpenCut Desktop-win32-x64"
+powershell -Command "Start-Process explorer -ArgumentList 'C:\Users\zdhpe\Desktop\New folder\OpenCut\apps\web\dist\OpenCut Desktop-win32-x64'" 2>/dev/null || echo "⚠️ Could not auto-open folder. Please navigate manually to:"
 
 echo "✅ Build complete! OpenCut Desktop.exe is ready to test."
-echo "📍 Location: dist/OpenCut Desktop-win32-x64/OpenCut Desktop.exe"
+echo "📍 Location: C:\Users\zdhpe\Desktop\New folder\OpenCut\apps\web\dist\OpenCut Desktop-win32-x64\OpenCut Desktop.exe"
