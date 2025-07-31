@@ -93,3 +93,63 @@ Packaged electron apps have files in same directory as main.js, not `../out/`.
 - **Export**: ~30 seconds
 - **Package**: ~2 minutes
 - **Manual fixes**: ~30 seconds
+
+## Automated Build Script Plan
+
+### Proposed Automation Steps
+1. **Clean existing builds**: Delete `out/` and `dist/` directories
+2. **Build fresh**: Run `npm run export:electron` 
+3. **Package automatically**: Run the complete packaging sequence
+4. **Apply fixes**: Automatically fix main.js paths and preload script
+5. **Open result**: Launch Windows Explorer to show the final executable
+
+### Script Structure
+```bash
+#!/bin/bash
+# auto-build-electron.sh
+
+echo "🧹 Cleaning previous builds..."
+rm -rf out dist temp-build
+
+echo "🏗️ Building Next.js export..."
+npm run export:electron
+
+echo "📦 Creating package structure..."
+mkdir -p temp-build
+cp -r out/* temp-build/
+cp electron/main-prod.js temp-build/main.js
+cp electron/preload.js temp-build/
+echo '{"name":"opencut-desktop","version":"1.0.0","main":"main.js"}' > temp-build/package.json
+
+echo "🔧 Packaging executable..."
+npx electron-packager temp-build "OpenCut Desktop" --platform=win32 --arch=x64 --out=dist --overwrite
+
+echo "⚡ Applying fixes..."
+# Fix main.js preload and path issues automatically
+
+echo "🧹 Cleaning temp files..."
+rm -rf temp-build
+
+echo "📂 Opening result folder..."
+explorer "dist/OpenCut Desktop-win32-x64"
+
+echo "✅ Build complete!"
+```
+
+### Benefits
+- **One command build**: Run script and get working executable
+- **Consistent results**: Same process every time
+- **No manual fixes**: Automate the main.js path/preload fixes
+- **Instant testing**: Automatically opens folder for immediate testing
+- **Clean builds**: Always starts fresh to avoid cache issues
+
+### Usage
+```bash
+cd "C:\Users\zdhpe\Desktop\New folder\OpenCut\apps\web"
+./auto-build-electron.sh
+```
+
+### Time Savings
+- **Manual process**: 3-5 minutes with multiple commands
+- **Automated process**: 2-3 minutes with single command
+- **Error reduction**: No missed steps or manual fix mistakes
