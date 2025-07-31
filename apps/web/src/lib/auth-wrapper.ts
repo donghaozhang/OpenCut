@@ -17,7 +17,8 @@ export function useSession() {
   useEffect(() => {
     if (isElectron()) {
       // Desktop mode - create local session immediately
-      console.log('🖥️ Desktop mode detected - using local authentication');
+      // Remove debug logging
+      // console.log('🖥️ Desktop mode detected - using local authentication');
       const desktopSession = createDesktopSession();
       setSession(desktopSession);
       setIsLoading(false);
@@ -47,7 +48,8 @@ export function useSession() {
  */
 export async function signIn(provider?: string, options?: any) {
   if (isElectron()) {
-    console.log('🖥️ Desktop mode - sign in not required');
+    // Remove debug logging
+    // console.log('🖥️ Desktop mode - sign in not required');
     return { success: true, data: createDesktopSession().data };
   }
   

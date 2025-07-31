@@ -33,10 +33,17 @@ export function Header() {
   const leftContent = (
     <UniversalLink 
       href="/" 
-      className="flex items-center gap-3 no-underline"
-      style={{ textDecoration: 'none' }}
+      className="flex items-center gap-3 no-underline hover:bg-white/10 transition-colors duration-200"
+      style={{ 
+        textDecoration: 'none',
+        backgroundColor: 'rgba(255, 255, 255, 0.05)',
+        borderRadius: '12px',
+        padding: '8px 16px',
+        border: '1px solid rgba(255, 255, 255, 0.1)',
+        marginLeft: '320px'
+      }}
     >
-      <Image src="./logo.svg" alt="OpenCut Logo" width={32} height={32} style={{ marginLeft: '380px' }} />
+      <Image src="./logo.svg" alt="OpenCut Logo" width={32} height={32} />
       <span className="text-xl font-medium" style={{ color: 'white' }}>OpenCut</span>
     </UniversalLink>
   );

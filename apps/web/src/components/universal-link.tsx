@@ -25,29 +25,40 @@ export function UniversalLink({
     (typeof navigator !== 'undefined' && navigator?.userAgent?.includes('Electron'))
   )
 
+  // Remove debug logging
   // Only log in browser environment
-  if (typeof window !== 'undefined') {
-    console.log('🔄 UniversalLink render:', { 
-      href, 
-      isElectron, 
-      hasElectronAPI: !!(window as any)?.electronAPI,
-      hasElectron: !!(window as any)?.electron,
-      userAgent: typeof navigator !== 'undefined' ? navigator?.userAgent?.includes('Electron') : false
-    })
-  }
+  // if (typeof window !== 'undefined') {
+  //   console.log('🔄 UniversalLink render:', { 
+  //     href, 
+  //     isElectron, 
+  //     hasElectronAPI: !!(window as any)?.electronAPI,
+  //     hasElectron: !!(window as any)?.electron,
+  //     userAgent: typeof navigator !== 'undefined' ? navigator?.userAgent?.includes('Electron') : false
+  //   })
+  // }
 
   if (isElectron) {
-    if (typeof window !== 'undefined') {
-      console.log('✅ UniversalLink: Using manual hash navigation for href:', href)
-    }
+    // Remove debug logging
+    // if (typeof window !== 'undefined') {
+    //   console.log('✅ UniversalLink: Using manual hash navigation for href:', href)
+    // }
     // Use manual hash navigation for Electron (more reliable than ReactRouterLink)
     return (
       <button
         className={className}
-        style={style}
+        style={{
+          ...style,
+          background: 'transparent',
+          border: 'none',
+          padding: 0,
+          margin: 0,
+          outline: 'none',
+          cursor: 'pointer'
+        }}
         onClick={(e) => {
           e.preventDefault()
-          console.log('🔥 Manual hash navigation to:', href)
+          // Remove debug logging
+          // console.log('🔥 Manual hash navigation to:', href)
           if (typeof window !== 'undefined') {
             window.location.hash = href
           }

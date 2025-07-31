@@ -9,7 +9,8 @@ interface HomeProps {
 }
 
 export default function Home({ signupCount = 0 }: HomeProps) {
-  console.log('🏡 HomePage: Component rendered');
+  // Remove debug logging
+  // console.log('🏡 HomePage: Component rendered');
   
   return (
     <div>

@@ -45,13 +45,14 @@ export function DevelopmentDebug() {
       // });
       
       // Test storage service in Electron
-      if (isElectronEnvironment()) {
-        console.log('🔧 Electron Storage Test:', {
-          electronAPI: !!window.electronAPI,
-          storageServiceAvailable: !!storageService,
-          storageFullySupported: storageService.isFullySupported()
-        });
-      }
+      // if (isElectronEnvironment()) {
+      //   // Remove debug logging
+      //   console.log('🔧 Electron Storage Test:', {
+      //     electronAPI: !!window.electronAPI,
+      //     storageServiceAvailable: !!storageService,
+      //     storageFullySupported: storageService.isFullySupported()
+      //   });
+      // }
     }
   }, []);
 
