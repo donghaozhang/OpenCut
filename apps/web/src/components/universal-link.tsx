@@ -1,4 +1,5 @@
 import NextLink from 'next/link'
+import { Link as ReactRouterLink } from 'react-router-dom'
 
 interface UniversalLinkProps {
   href: string
@@ -17,26 +18,44 @@ export function UniversalLink({
   onClick, 
   prefetch = false 
 }: UniversalLinkProps) {
-  const isElectron = typeof window !== 'undefined' && (window as any).electronAPI
+  // SSR-safe Electron detection with multiple checks
+  const isElectron = typeof window !== 'undefined' && (
+    (window as any).electronAPI || 
+    (window as any).electron ||
+    (typeof navigator !== 'undefined' && navigator?.userAgent?.includes('Electron'))
+  )
+
+  // Only log in browser environment
+  if (typeof window !== 'undefined') {
+    console.log('🔄 UniversalLink render:', { 
+      href, 
+      isElectron, 
+      hasElectronAPI: !!(window as any)?.electronAPI,
+      hasElectron: !!(window as any)?.electron,
+      userAgent: typeof navigator !== 'undefined' ? navigator?.userAgent?.includes('Electron') : false
+    })
+  }
 
   if (isElectron) {
-    // Use direct navigation in Electron
+    if (typeof window !== 'undefined') {
+      console.log('✅ UniversalLink: Using manual hash navigation for href:', href)
+    }
+    // Use manual hash navigation for Electron (more reliable than ReactRouterLink)
     return (
-      <div
+      <button
         className={className}
-        style={{ ...style, cursor: 'pointer' }}
+        style={style}
         onClick={(e) => {
           e.preventDefault()
-          
-          // Simple client-side navigation
-          window.history.pushState({}, '', href)
-          window.location.reload()
-          
+          console.log('🔥 Manual hash navigation to:', href)
+          if (typeof window !== 'undefined') {
+            window.location.hash = href
+          }
           if (onClick) onClick(e)
         }}
       >
         {children}
-      </div>
+      </button>
     )
   }
   // Use Next.js Link in web

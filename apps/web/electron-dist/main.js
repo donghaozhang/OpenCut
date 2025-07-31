@@ -17,6 +17,8 @@ async function createWindow() {
       nodeIntegration: false,
       contextIsolation: true,
       webSecurity: false,
+      preload: path.join(__dirname, 'preload.js'),
+      partition: 'nopersist', // Force fresh cache
     },
     show: true,
     center: true,
@@ -44,7 +46,7 @@ async function createWindow() {
 
   console.log('🚀 OpenCut Desktop window created');
 
-  // Intercept failed requests and fix paths for chunks
+  // Intercept failed requests and fix paths for chunks and assets
   session.defaultSession.webRequest.onBeforeRequest((details, callback) => {
     const { url } = details;
     
@@ -64,6 +66,25 @@ async function createWindow() {
       return;
     }
     
+    // Fix root-level assets (landing-page-bg.png, logo.svg, etc.)
+    if (url.startsWith('file:///C:/') && !url.includes('/out/') && !url.includes('/_next/')) {
+      // Extract the filename from the URL
+      const filename = url.replace('file:///C:/', '');
+      const fixedUrl = `file:///${__dirname.replace(/\\/g, '/')}/out/${filename}`;
+      console.log('🔧 Fixing root asset:', url, '->', fixedUrl);
+      callback({ redirectURL: fixedUrl });
+      return;
+    }
+    
+    // Fix editor page assets
+    if (url.startsWith('file:///C:/editor/') && !url.includes('/out/')) {
+      const assetPath = url.replace('file:///C:/editor/', '');
+      const fixedUrl = `file:///${__dirname.replace(/\\/g, '/')}/out/_next/static/${assetPath}`;
+      console.log('🔧 Fixing editor asset:', url, '->', fixedUrl);
+      callback({ redirectURL: fixedUrl });
+      return;
+    }
+    
     callback({});
   });
 
@@ -71,10 +92,15 @@ async function createWindow() {
     console.error(`❌ Failed to load: ${validatedURL}`);
     console.error(`Error: ${errorDescription} (${errorCode})`);
     
-    // For client-side routing, redirect failed loads back to index.html
-    if (validatedURL.includes('file://') && !validatedURL.includes('index.html')) {
-      console.log('🔄 Redirecting to index.html for client-side routing');
+    // Hash Router handles all routing client-side
+    // Only redirect non-hash URLs back to index.html
+    if (validatedURL.includes('file://') && 
+        !validatedURL.includes('index.html') && 
+        !validatedURL.includes('#')) {
+      console.log('🔄 Hash Router: Redirecting to index.html for client-side routing');
       mainWindow.loadFile(indexPath);
+    } else if (validatedURL.includes('#')) {
+      console.log('🔄 Hash Router: Allowing hash URL navigation:', validatedURL);
     }
   });
 
@@ -89,13 +115,14 @@ async function createWindow() {
       return;
     }
     
-    // For file:// URLs that aren't index.html, prevent navigation
-    // Let the app handle routing client-side
-    if (url.startsWith('file://') && !url.includes('index.html')) {
-      event.preventDefault();
-      console.log('🔄 Preventing navigation, letting React Router handle:', url);
-      return;
+    // Hash URLs should be handled by Hash Router, not main process
+    if (url.includes('#')) {
+      console.log('🔄 Hash Router: Hash URL detected, letting client handle:', url);
+      return; // Let Hash Router handle hash navigation
     }
+    
+    // Non-hash URLs - let it fail and handle in did-fail-load
+    console.log('🔄 Allowing navigation to fail, will handle in did-fail-load');
   });
 
   mainWindow.webContents.openDevTools();

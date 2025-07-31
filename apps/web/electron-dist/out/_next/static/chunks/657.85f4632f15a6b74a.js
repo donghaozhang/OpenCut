@@ -1,1 +1,0 @@
-"use strict";(self.webpackChunk_N_E=self.webpackChunk_N_E||[]).push([[657],{3038:(s,e,_)=>{_.r(e),_.d(e,{signIn:()=>E,signUp:()=>U,useSession:()=>a});var n=_(4191),u=_(3601);let{signIn:E,signUp:U,useSession:a}=(0,n.MB)({baseURL:u.env.NEXT_PUBLIC_BETTER_AUTH_URL})}}]);

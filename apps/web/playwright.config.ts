@@ -34,7 +34,11 @@ export default defineConfig({
 
     {
       name: 'electron',
-      testMatch: /electron-navigation\.spec\.ts/,
+      testMatch: /electron-tests\/.*\.spec\.ts/,
+      use: {
+        // Electron tests don't need baseURL
+        baseURL: undefined,
+      },
     },
 
     // Disabled for CI/environments without full browser deps

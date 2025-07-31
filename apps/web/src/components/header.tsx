@@ -31,36 +31,32 @@ export function Header() {
 
 
   const leftContent = (
-    <Link 
+    <UniversalLink 
       href="/" 
       className="flex items-center gap-3 no-underline"
-      onClick={(e) => handleClick(e, "/")}
-      prefetch={false}
       style={{ textDecoration: 'none' }}
     >
       <Image src="./logo.svg" alt="OpenCut Logo" width={32} height={32} style={{ marginLeft: '380px' }} />
       <span className="text-xl font-medium" style={{ color: 'white' }}>OpenCut</span>
-    </Link>
+    </UniversalLink>
   );
 
   const rightContent = (
     <nav className="flex items-center bg-black/30 backdrop-blur-md rounded-full px-4 py-2 border-2 border-white/20 shadow-lg" style={{ marginRight: '120px', transform: 'translateX(-30px)' }}>
-      <Link 
+      <UniversalLink 
         href="/blog"
         className="text-sm hover:text-gray-300 transition-colors no-underline"
         style={{ textDecoration: 'none', marginRight: '24px', color: 'white' }}
       >
         Blog
-      </Link>
-      <Link 
+      </UniversalLink>
+      <UniversalLink 
         href="/contributors"
-        onClick={(e) => handleClick(e, "/contributors")}
-        prefetch={false}
         className="text-sm hover:text-gray-300 transition-colors no-underline"
         style={{ textDecoration: 'none', marginRight: '24px', color: 'white' }}
       >
         Contributors
-      </Link>
+      </UniversalLink>
       <UniversalLink 
         href="/projects"
       >
