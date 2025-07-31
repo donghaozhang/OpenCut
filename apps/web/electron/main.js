@@ -1,5 +1,6 @@
 const { app, BrowserWindow } = require('electron');
 const { spawn } = require('child_process');
+const path = require('path');
 
 let mainWindow;
 
@@ -11,6 +12,7 @@ async function createWindow() {
       nodeIntegration: false,
       contextIsolation: true,
       webSecurity: false, // Allow localhost connections
+      preload: path.join(__dirname, 'preload.js')
     },
     show: true, // Show immediately for debugging
     alwaysOnTop: true, // Temporarily on top

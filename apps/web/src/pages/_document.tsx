@@ -12,6 +12,9 @@ export default function Document() {
         <link rel="manifest" href="/manifest.json" />
         <meta name="robots" content="index, follow" />
         <meta name="msapplication-config" content="/browserconfig.xml" />
+        {/* Preload critical resources for better performance */}
+        <link rel="preload" href="/ffmpeg/ffmpeg-core.wasm" as="fetch" crossOrigin="anonymous" />
+        <link rel="preload" href="/ffmpeg/ffmpeg-core.js" as="script" crossOrigin="anonymous" />
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-title" content="OpenCut" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
@@ -191,6 +194,40 @@ export default function Document() {
                   //   userAgent: navigator.userAgent,
                   //   isElectron: window.process && window.process.type === 'renderer'
                   // });
+                  
+                  // Safe URL validation patching for Electron context
+                  try {
+                    // Only patch if we can write to the property
+                    const descriptor = Object.getOwnPropertyDescriptor(window.location, 'assign');
+                    if (descriptor && descriptor.configurable) {
+                      const originalAssign = window.location.assign;
+                      Object.defineProperty(window.location, 'assign', {
+                        value: function(url) {
+                          console.log('[URL Validation] location.assign called with:', url);
+                          return originalAssign.call(this, url);
+                        },
+                        configurable: true
+                      });
+                    }
+                  } catch (e) {
+                    // Silently fail in Electron context where location cannot be patched
+                  }
+                  
+                  try {
+                    const descriptor = Object.getOwnPropertyDescriptor(window.location, 'replace');
+                    if (descriptor && descriptor.configurable) {
+                      const originalReplace = window.location.replace;
+                      Object.defineProperty(window.location, 'replace', {
+                        value: function(url) {
+                          console.log('[URL Validation] location.replace called with:', url);
+                          return originalReplace.call(this, url);
+                        },
+                        configurable: true
+                      });
+                    }
+                  } catch (e) {
+                    // Silently fail in Electron context
+                  }
                 }
                 
                 // console.log('✅ [IMMEDIATE BLOCK] All data fetching mechanisms blocked at script level');

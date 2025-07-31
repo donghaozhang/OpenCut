@@ -111,18 +111,18 @@ These scripts are essential for:
 ## Latest Build (2025-07-31)
 
 ### Current Working Build
-**Location**: `apps/web/dist/OpenCut Desktop Fixed-win32-x64/OpenCut Desktop Fixed.exe`
+**Location**: `apps/web/electron-dist/main.js` (Development Build)
 
-**Status**: ⚠️ **React Errors Persist** - Build functional but with console errors  
-**Issue**: React reconciliation errors (#418, #423) continue despite architectural simplification  
-**Navigation**: Projects button may not work due to React errors
+**Status**: ✅ **Hash Router Navigation WORKING** - Manual hash navigation implemented  
+**Issue**: ReactRouterLink failed in static builds, replaced with direct `window.location.hash`  
+**Navigation**: All navigation working via manual hash manipulation
 
-**Architecture Improvements**:
-- ✅ **Simplified React Architecture** - Removed complex error boundaries and wrappers
-- ✅ **Clean Component Tree** - Direct rendering without Electron-specific providers
-- ✅ **ElectronAPI Integration** - Proper preload script with `window.electronAPI`
-- ✅ **Universal Navigation** - UniversalLink component that detects environment
-- ❌ **React Hydration Issues** - Static export incompatible with Electron file:// protocol
+**Final Solution**:
+- ✅ **Hash Router Working** - `window.location.hash = '/projects'` successfully changes pages
+- ✅ **Manual Navigation** - UniversalLink uses direct hash assignment instead of ReactRouterLink
+- ✅ **Electron Detection** - `window.electronAPI` properly detected for environment switching
+- ✅ **Route Rendering** - ElectronRouter with HashRouter renders page changes correctly
+- ✅ **Build Fresh** - Latest build with `_app-7cc81a88fd990885.js` includes manual hash navigation
 
 ### Build Process (Current)
 ```bash
