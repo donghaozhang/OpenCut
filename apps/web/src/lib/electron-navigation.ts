@@ -1,20 +1,16 @@
 /**
  * Navigation utilities for Electron environment
- * Handles navigation using window.location instead of Next.js router for static exports
+ * Handles navigation using simple window.history API
  */
 
 export function useElectronNavigation() {
   const navigateTo = (path: string) => {
     if (typeof window !== 'undefined' && window.electronAPI) {
-      // TanStack Router handles all routing client-side
-      // Just update the URL and let TanStack Router handle the navigation
       console.log('🔄 TanStack Router navigation to:', path);
       
-      // Use history API to navigate without page reload
+      // Simple navigation using history API and reload
       window.history.pushState({}, '', path);
-      
-      // Trigger a popstate event to notify TanStack Router of the change
-      window.dispatchEvent(new PopStateEvent('popstate', { state: {} }));
+      window.location.reload();
     } else {
       // In browser, use normal navigation (this won't be called in our case but good fallback)
       window.location.href = path;

@@ -9,6 +9,7 @@ import { getStars } from "@/lib/fetch-github-stars";
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import { useElectronLink } from "@/lib/electron-navigation";
+import { UniversalLink } from "./universal-link";
 
 export function Header() {
   const { data: session } = useSession();
@@ -60,10 +61,8 @@ export function Header() {
       >
         Contributors
       </Link>
-      <Link 
+      <UniversalLink 
         href="/projects"
-        onClick={(e) => handleClick(e, "/projects")}
-        prefetch={false}
       >
         <button
           style={{
@@ -101,7 +100,7 @@ export function Header() {
           Projects
           <ArrowRight className="ml-0.5 h-4 w-4" />
         </button>
-      </Link>
+      </UniversalLink>
     </nav>
   );
 

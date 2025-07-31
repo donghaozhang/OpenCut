@@ -108,6 +108,78 @@ These scripts are essential for:
 - **Robust protocol handler**: app:// protocol handler for consistent asset loading
 - **Script pipeline**: `export:electron` runs build → fix paths → remove blocking scripts → copy navigation fix
 
+## Latest Build (2025-07-31)
+
+### Current Working Build
+**Location**: `apps/web/dist/OpenCut Desktop Fixed-win32-x64/OpenCut Desktop Fixed.exe`
+
+**Status**: ⚠️ **React Errors Persist** - Build functional but with console errors  
+**Issue**: React reconciliation errors (#418, #423) continue despite architectural simplification  
+**Navigation**: Projects button may not work due to React errors
+
+**Architecture Improvements**:
+- ✅ **Simplified React Architecture** - Removed complex error boundaries and wrappers
+- ✅ **Clean Component Tree** - Direct rendering without Electron-specific providers
+- ✅ **ElectronAPI Integration** - Proper preload script with `window.electronAPI`
+- ✅ **Universal Navigation** - UniversalLink component that detects environment
+- ❌ **React Hydration Issues** - Static export incompatible with Electron file:// protocol
+
+### Build Process (Current)
+```bash
+# 1. Build Next.js static export
+cd apps/web
+bun run build
+
+# 2. Fix paths for Electron
+node scripts/fix-electron-paths-robust.js
+
+# 3. Update electron-dist with latest build
+cp -r out electron-dist/out
+
+# 4. Package with electron-packager
+npx electron-packager electron-dist "OpenCut Desktop Fixed" --platform=win32 --arch=x64 --out=dist --overwrite
+```
+
+### Key Components
+- **UniversalLink** (`src/components/universal-link.tsx`) - Environment-aware navigation
+- **Preload Script** (`electron/preload.js`) - Exposes `window.electronAPI`
+- **Main Process** (`electron-dist/main.js`) - Simplified routing with TanStack Router fallback
+
+### Architecture Changes
+**Before**: Complex nested providers causing React reconciliation errors
+```
+ElectronErrorBoundary → ElectronReactProvider → ElectronRouterWrapper → ThemeProvider → ...
+```
+
+**After**: Simplified direct rendering
+```
+ThemeProvider → TooltipProvider → UrlValidationProvider → StorageProvider → Component
+```
+
+### Navigation Solution
+- **Electron Environment**: Uses `window.history.pushState() + window.location.reload()`
+- **Web Environment**: Uses standard Next.js Link components
+- **Detection**: `typeof window !== 'undefined' && window.electronAPI`
+
+### Known Issues Status
+- ❌ **React Error #418/423** - Persist despite architectural simplification (root cause: Next.js + Electron incompatibility)
+- ✅ **Navigation Loops** - Fixed with proper route handling
+- ✅ **Chunk Loading** - Fixed with network request interception
+- ✅ **ElectronAPI Missing** - Fixed with proper preload script
+
+### Recommended Next Steps
+**Primary Solution**: Implement Hash Router approach (see `docs/issues/electron-hash-router-recommendation.md`)
+- **Time Estimate**: 69 minutes (7 phases)
+- **Success Probability**: High - eliminates SSR/hydration conflicts
+- **Risk Level**: Low - isolated to Electron builds only
+
+### Console Messages (Expected)
+```
+🔧 Preload script loaded - electronAPI exposed to window
+🚀 [ELECTRON] ElectronAPI detected and data-electron set
+A preload for '...woff2' is found, but is not used... (Non-critical font warning)
+```
+
 ## Keyboard Shortcuts
 
 - **F12** - Toggle Developer Tools
