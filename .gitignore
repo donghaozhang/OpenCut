@@ -131,6 +131,7 @@ test-results/
 # Electron build output
 apps/web/electron-dist/
 apps/web/electron-dist/out/
+temp-build*/
 
 # NPM package lock files (using bun)
 package-lock.json

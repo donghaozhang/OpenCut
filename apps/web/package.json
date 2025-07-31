@@ -8,7 +8,7 @@
     "dev": "next dev",
     "build": "next build",
     "build:electron": "cross-env NEXT_PUBLIC_ELECTRON=true next build",
-    "postexport": "node scripts/fix-electron-paths-robust.js",
+    "postexport": "node scripts/fix-electron-paths-robust.js && node scripts/fix-electron-webpack-runtime.js",
     "export:electron": "cross-env NEXT_PUBLIC_ELECTRON=true next build && npm run postexport",
     "electron:dev": "node scripts/dev-electron.js",
     "electron:simple": "npx electron electron/main.js",

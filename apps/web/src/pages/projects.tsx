@@ -737,7 +737,17 @@ function ProjectCard({ project, isSelected, onSelect }: ProjectCardProps) {
         }}
         onClick={() => {
           if (DEBUG_PROJECTS) console.log("🔗 [CLICK DEBUG] Click: Open Project:", project.id);
-          window.location.href = `/editor/project/${encodeURIComponent(project.id)}`;
+          
+          // Check if we're in Electron environment
+          const hasElectronAPI = typeof window !== 'undefined' && (window as any).electronAPI;
+          
+          if (hasElectronAPI) {
+            console.log('🔄 [DEBUG] Using hash navigation for Electron project click');
+            window.location.hash = `/editor/project/${encodeURIComponent(project.id)}`;
+          } else {
+            console.log('🔄 [DEBUG] Using href navigation for web project click');
+            window.location.href = `/editor/project/${encodeURIComponent(project.id)}`;
+          }
         }}
         onMouseEnter={(e) => {
           if (!isSelected) {
